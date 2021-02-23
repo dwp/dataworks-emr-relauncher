@@ -26,7 +26,7 @@ STEPS_TO_RETRY = [
     "create_databases",
     "clean-dictionary-data",
     "metrics-setup",
-    "create-hive-dynamo-table"
+    "create-hive-dynamo-table",
 ]
 
 
@@ -68,30 +68,28 @@ def handle_event(event):
     dynamo_items = query_dynamo(dynamo_client, cluster_id)
 
     if not dynamo_items:
-        logger.info(f'No item found in DynamoDb table {args.table_name} for cluster_id {cluster_id}')
+        logger.info(
+            f"No item found in DynamoDb table {args.table_name} for cluster_id {cluster_id}"
+        )
     else:
         failed_item = dynamo_items[0]  # can only be one item
-        failed_step = failed_item['CurrentStep']
+        failed_step = failed_item["CurrentStep"]
 
         if failed_step in STEPS_TO_RETRY:
-            logger.info(f'Previous failed step was, {failed_step}. Relaunching cluster')
+            logger.info(f"Previous failed step was, {failed_step}. Relaunching cluster")
 
-            payload = generate_lambda_launcher_payload(
-                failed_item
-            )
+            payload = generate_lambda_launcher_payload(failed_item)
 
-            sns_response = send_sns_message(
-                sns_client,
-                payload,
-                args.sns_topic
-            )
-            logger.info(f'Response from Sns: {sns_response}.')
+            sns_response = send_sns_message(sns_client, payload, args.sns_topic)
+            logger.info(f"Response from Sns: {sns_response}.")
         else:
-            logger.info(f'Previous failed step was, {failed_step}. Cluster not relaunching')
+            logger.info(
+                f"Previous failed step was, {failed_step}. Cluster not relaunching"
+            )
 
 
 def get_cluster_id(json_event):
-    """ Retrieves the cluster_id from the event
+    """Retrieves the cluster_id from the event
 
     Arguments:
         json_event (dict): The dict representing a Cloudwatch Event
@@ -100,13 +98,13 @@ def get_cluster_id(json_event):
         cluster_id: The cluster_id found in the event
 
     """
-    cluster_id = json_event['detail']['clusterId']
+    cluster_id = json_event["detail"]["clusterId"]
     logger.info(f"Cluster Id {cluster_id}")
     return cluster_id
 
 
 def query_dynamo(dynamo_table, cluster_id):
-    """ Queries the DynamoDb table
+    """Queries the DynamoDb table
 
     Arguments:
         dynamo_table (table): The boto3 table for DynamoDb
@@ -116,27 +114,21 @@ def query_dynamo(dynamo_table, cluster_id):
         list: The items matching the scan operation
 
     """
-    response = dynamo_table.scan(
-        FilterExpression=Attr("Cluster_Id").eq(cluster_id)
-    )
-    logger.info(f'Response from dynamo {response}')
-    return response['Items']
+    response = dynamo_table.scan(FilterExpression=Attr("Cluster_Id").eq(cluster_id))
+    logger.info(f"Response from dynamo {response}")
+    return response["Items"]
 
 
 def generate_lambda_launcher_payload(dynamo_item):
     payload = {
-        'correlation_id': dynamo_item['Correlation_Id'],
-        's3_prefix': dynamo_item['S3_Prefix']
+        "correlation_id": dynamo_item["Correlation_Id"],
+        "s3_prefix": dynamo_item["S3_Prefix"],
     }
-    logger.info(f'Lambda payload: {payload}')
+    logger.info(f"Lambda payload: {payload}")
     return payload
 
 
-def send_sns_message(
-        sns_client,
-        payload,
-        sns_topic_arn
-):
+def send_sns_message(sns_client, payload, sns_topic_arn):
     """Publishes the message to sns.
 
     Arguments:
@@ -216,7 +208,7 @@ def get_dynamo_table(table_name):
         table: A resource representing an Amazon DynamoDB Table
 
     """
-    dynamodb = boto3.resource('dynamodb')
+    dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table(table_name)
     return table
 

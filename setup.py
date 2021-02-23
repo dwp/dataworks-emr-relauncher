@@ -10,7 +10,9 @@ setuptools.setup(
     description="A lambda that deals with relaunching failed EMR clusters",
     long_description="A lambda that deals with relaunching failed EMR clusters",
     long_description_content_type="text/markdown",
-    entry_points={"console_scripts": ["emr_relauncher_handler=emr_relauncher_handler:handler"]},
+    entry_points={
+        "console_scripts": ["emr_relauncher_handler=emr_relauncher_handler:handler"]
+    },
     package_dir={"": "src"},
     packages=setuptools.find_packages("src"),
     install_requires=["argparse", "boto3", "moto"],
