@@ -8,7 +8,7 @@ from unittest import mock
 import boto3
 from moto import mock_dynamodb2
 
-import event_handler
+from emr_relauncher_lambda import event_handler
 
 SNS_TOPIC_ARN = "test-sns-topic-arn"
 TABLE_NAME = "data_pipeline_metadata"
