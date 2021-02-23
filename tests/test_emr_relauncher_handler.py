@@ -8,7 +8,7 @@ from unittest import mock
 import boto3
 from moto import mock_dynamodb2
 
-from src.emr_relauncher_lambda import event_handler
+from emr_relauncher_lambda import event_handler
 
 SNS_TOPIC_ARN = "test-sns-topic-arn"
 TABLE_NAME = "data_pipeline_metadata"
@@ -21,7 +21,7 @@ args.log_level = "INFO"
 
 class TestRelauncher(unittest.TestCase):
     @mock_dynamodb2
-    @mock.patch("src.emr_relauncher_lambda.event_handler.logger")
+    @mock.patch("emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_exists(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_resource("transform")
         result = event_handler.query_dynamo(dynamodb_resource, "test_cluster_id")
@@ -39,18 +39,18 @@ class TestRelauncher(unittest.TestCase):
         )
 
     @mock_dynamodb2
-    @mock.patch("src.emr_relauncher_lambda.event_handler.logger")
+    @mock.patch("emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_empty_result(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_resource("transform")
         result = event_handler.query_dynamo(dynamodb_resource, "invalid_cluster_id")
         self.assertEqual(result, [])
 
-    @mock.patch("src.emr_relauncher_lambda.event_handler.send_sns_message")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.setup_logging")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_environment_variables")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_dynamo_table")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_sns_client")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.logger")
+    @mock.patch("emr_relauncher_lambda.event_handler.send_sns_message")
+    @mock.patch("emr_relauncher_lambda.event_handler.setup_logging")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_environment_variables")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
+    @mock.patch("emr_relauncher_lambda.event_handler.logger")
     @mock_dynamodb2
     def test_handler_sns_message_sent(
         self,
@@ -78,12 +78,12 @@ class TestRelauncher(unittest.TestCase):
             args.sns_topic,
         )
 
-    @mock.patch("src.emr_relauncher_lambda.event_handler.send_sns_message")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.setup_logging")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_environment_variables")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_dynamo_table")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_sns_client")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.logger")
+    @mock.patch("emr_relauncher_lambda.event_handler.send_sns_message")
+    @mock.patch("emr_relauncher_lambda.event_handler.setup_logging")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_environment_variables")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
+    @mock.patch("emr_relauncher_lambda.event_handler.logger")
     @mock_dynamodb2
     def test_handler_failing_event_not_retried(
         self,
@@ -107,10 +107,10 @@ class TestRelauncher(unittest.TestCase):
 
         send_sns_message_mock.assert_not_called()
 
-    @mock.patch("src.emr_relauncher_lambda.event_handler.setup_logging")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_environment_variables")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.get_sns_client")
-    @mock.patch("src.emr_relauncher_lambda.event_handler.logger")
+    @mock.patch("emr_relauncher_lambda.event_handler.setup_logging")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_environment_variables")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
+    @mock.patch("emr_relauncher_lambda.event_handler.logger")
     def test_handler_invalid_environment_variable(
         self,
         mock_logger,
