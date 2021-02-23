@@ -28,7 +28,7 @@ env-vars: ## Make env vars required by application
 		export PYTHONPATH=$(shell pwd)/src; \
 		export LOG_LEVEL=DEBUG; \
 		export ENVIRONMENT=LOCAL; \
-		export APPLICATION="batch_job_handler_lambda"; \
+		export APPLICATION="emr_relauncher_lambda"; \
 	}
 
 unittest:
@@ -38,8 +38,8 @@ deployable:
 	rm -rf artifacts
 	mkdir artifacts
 	pip3 install -r requirements.txt -t artifacts
-	cp src/batch_job_handler_lambda/*.py artifacts/
-	cd artifacts && zip -r ../batch-job-handler-development.zip ./ && cd -
+	cp src/emr_relauncher_lambda/*.py artifacts/
+	cd artifacts && zip -r ../emr-relauncher-handler-development.zip ./ && cd -
 
 clean:
-	rm -rf artifacts ./src/batch_job_handler.egg-info ./batch-job-handler-development.zip
+	rm -rf artifacts ./src/emr_relauncher_handler.egg-info ./emr-relauncher-handler-development.zip
