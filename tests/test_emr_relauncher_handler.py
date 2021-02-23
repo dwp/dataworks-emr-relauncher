@@ -25,7 +25,7 @@ class TestRelauncher(unittest.TestCase):
     @mock.patch("src.emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_exists(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_resource("transform")
-        result = event_handler.query_dynamo(dynamodb_resource, TABLE_NAME, "test_cluster_id")
+        result = event_handler.query_dynamo(dynamodb_resource, "test_cluster_id")
         self.assertEqual(
             result,
             [{
@@ -42,7 +42,7 @@ class TestRelauncher(unittest.TestCase):
     @mock.patch("src.emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_empty_result(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_resource("transform")
-        result = event_handler.query_dynamo(dynamodb_resource, TABLE_NAME, "invalid_cluster_id")
+        result = event_handler.query_dynamo(dynamodb_resource, "invalid_cluster_id")
         self.assertEqual(
             result,
             []

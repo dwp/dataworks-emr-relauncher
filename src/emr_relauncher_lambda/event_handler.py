@@ -15,7 +15,18 @@ args = None
 logger = None
 
 STEPS_TO_RETRY = [
-    "transform"
+    "transform",
+    "create-views-tables",
+    "views",
+    "model",
+    "transform",
+    "source",
+    "initial_transactional_load",
+    "transactional",
+    "create_databases",
+    "clean-dictionary-data",
+    "metrics-setup",
+    "create-hive-dynamo-table"
 ]
 
 
@@ -29,6 +40,7 @@ def handler(event, context):
     """
     global logger
     logger = setup_logging("INFO")
+    logger.info(f'Cloudwatch Event": {event}')
     try:
         logger.info(os.getcwd())
         handle_event(event)
@@ -38,14 +50,8 @@ def handler(event, context):
 
 def handle_event(event):
     global args
-    global logger
-    global STEPS_TO_RETRY
 
     args = get_environment_variables()
-
-    logger.info(f'Cloudwatch Event", "sns_event": {event}, "mode": "handler')
-
-    sns_client = get_sns_client()
 
     if not args.sns_topic:
         raise Exception("Required environment variable SNS_TOPIC is unset")
@@ -53,45 +59,64 @@ def handle_event(event):
     if not args.table_name:
         raise Exception("Required environment variable TABLE_NAME is unset")
 
+    sns_client = get_sns_client()
+
     dynamo_client = get_dynamo_table(args.table_name)
 
     cluster_id = get_cluster_id(event)
 
-    dynamo_item = query_dynamo(dynamo_client, args.table_name, cluster_id)[0]
+    dynamo_items = query_dynamo(dynamo_client, cluster_id)
 
-    if not dynamo_item:
+    if not dynamo_items:
         logger.info(f'No item found in DynamoDb table {args.table_name} for cluster_id {cluster_id}')
     else:
-        failed_step = dynamo_item['CurrentStep']
+        failed_item = dynamo_items[0]  # can only be one item
+        failed_step = failed_item['CurrentStep']
 
         if failed_step in STEPS_TO_RETRY:
             logger.info(f'Previous failed step was, {failed_step}. Relaunching cluster')
 
             payload = generate_lambda_launcher_payload(
-                dynamo_item
-
+                failed_item
             )
 
-            send_sns_message(
+            sns_response = send_sns_message(
                 sns_client,
                 payload,
                 args.sns_topic
             )
+            logger.info(f'Response from Sns: {sns_response}.')
         else:
             logger.info(f'Previous failed step was, {failed_step}. Cluster not relaunching')
 
 
 def get_cluster_id(json_event):
-    global logger
+    """ Retrieves the cluster_id from the event
+
+    Arguments:
+        json_event (dict): The dict representing a Cloudwatch Event
+
+    Returns:
+        cluster_id: The cluster_id found in the event
+
+    """
     cluster_id = json_event['detail']['clusterId']
     logger.info(f"Cluster Id {cluster_id}")
     return cluster_id
 
 
-def query_dynamo(dynamo_client, table_name, cluster_id):
-    global logger
-    response = dynamo_client.scan(
-        TableName=table_name,
+def query_dynamo(dynamo_table, cluster_id):
+    """ Queries the DynamoDb table
+
+    Arguments:
+        dynamo_table (table): The boto3 table for DynamoDb
+        cluster_id (str): the cluster_id to query for
+
+    Returns:
+        list: The items matching the scan operation
+
+    """
+    response = dynamo_table.scan(
         FilterExpression=Attr("Cluster_Id").eq(cluster_id)
     )
     logger.info(f'Response from dynamo {response}')
@@ -99,11 +124,11 @@ def query_dynamo(dynamo_client, table_name, cluster_id):
 
 
 def generate_lambda_launcher_payload(dynamo_item):
-    global logger
     payload = {
         'correlation_id': dynamo_item['Correlation_Id'],
         's3_prefix': dynamo_item['S3_Prefix']
     }
+    logger.info(f'Lambda payload: {payload}')
     return payload
 
 
@@ -117,10 +142,9 @@ def send_sns_message(
     Arguments:
         sns_client (client): The boto3 client for SQS
         payload (dict): the payload to post to SNS
-        sns_topic_arn (string): the arn for the SNS topice
+        sns_topic_arn (string): the arn for the SNS topic
 
     """
-    global logger
     dumped_payload = get_escaped_json_string(payload)
     logger.info(
         f'Publishing payload to SNS", "payload": {dumped_payload}, "sns_topic_arn": "{sns_topic_arn}"'
@@ -186,6 +210,12 @@ def get_sns_client():
 
 
 def get_dynamo_table(table_name):
+    """Retrieve the boto3 DynamoDb Table resource.
+
+    Returns:
+        table: A resource representing an Amazon DynamoDB Table
+
+    """
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
     return table
