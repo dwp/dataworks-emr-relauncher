@@ -13,8 +13,8 @@ setuptools.setup(
     entry_points={
         "console_scripts": ["emr_relauncher_handler=emr_relauncher_handler:handler"]
     },
-    package_dir={"": "src"},
-    packages=setuptools.find_packages("src"),
+    package_dir={"": "emr_relauncher_lambda"},
+    packages=setuptools.find_packages("emr_relauncher_lambda"),
     install_requires=["argparse", "boto3", "moto"],
     classifiers=[
         "Programming Language :: Python :: 3",
