@@ -23,7 +23,7 @@ class TestRelauncher(unittest.TestCase):
     @mock_dynamodb2
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_exists(self, mock_logger):
-        dynamodb_resource = self.mock_get_dynamodb_resource("transform")
+        dynamodb_resource = self.mock_get_dynamodb_table("transform")
         result = event_handler.query_dynamo(dynamodb_resource, "test_cluster_id")
         self.assertEqual(
             result,
@@ -41,7 +41,7 @@ class TestRelauncher(unittest.TestCase):
     @mock_dynamodb2
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_empty_result(self, mock_logger):
-        dynamodb_resource = self.mock_get_dynamodb_resource("transform")
+        dynamodb_resource = self.mock_get_dynamodb_table("transform")
         result = event_handler.query_dynamo(dynamodb_resource, "invalid_cluster_id")
         self.assertEqual(result, [])
 
@@ -61,7 +61,7 @@ class TestRelauncher(unittest.TestCase):
         setup_logging_mock,
         send_sns_message_mock,
     ):
-        dynamodb_resource = self.mock_get_dynamodb_resource("transform")
+        dynamodb_resource = self.mock_get_dynamodb_table("transform")
         get_dynamo_table_mock.return_value = dynamodb_resource
 
         sns_client_mock = mock.MagicMock()
@@ -94,7 +94,7 @@ class TestRelauncher(unittest.TestCase):
         setup_logging_mock,
         send_sns_message_mock,
     ):
-        dynamodb_resource = self.mock_get_dynamodb_resource("collect_metrics")
+        dynamodb_resource = self.mock_get_dynamodb_table("collect_metrics")
         get_dynamo_table_mock.return_value = dynamodb_resource
 
         sns_client_mock = mock.MagicMock()
@@ -128,7 +128,7 @@ class TestRelauncher(unittest.TestCase):
             event_handler.handle_event(event)
 
     @mock_dynamodb2
-    def mock_get_dynamodb_resource(self, failed_step):
+    def mock_get_dynamodb_table(self, failed_step):
         dynamodb_client = boto3.client("dynamodb", region_name="eu-west-2")
         dynamodb_client.create_table(
             TableName=TABLE_NAME,
@@ -142,8 +142,8 @@ class TestRelauncher(unittest.TestCase):
             ],
             ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
         )
-        dynamodb = boto3.resource("dynamodb")
-        table_client = dynamodb.Table(TABLE_NAME)
+        dynamodb = boto3.resource("dynamodb", region_name="eu-west-2")
+        table = dynamodb.Table(TABLE_NAME)
 
         item = {
             "Correlation_Id": "test_correlation_id",
@@ -153,9 +153,9 @@ class TestRelauncher(unittest.TestCase):
             "Cluster_Id": "test_cluster_id",
         }
 
-        table_client.put_item(TableName=TABLE_NAME, Item=item)
+        table.put_item(TableName=TABLE_NAME, Item=item)
 
-        return table_client
+        return table
 
     @staticmethod
     def get_example_event(cluster_id):
