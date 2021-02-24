@@ -75,7 +75,9 @@ def handle_event(event):
         failed_item = dynamo_items[0]  # can only be one item
         failed_step = failed_item["CurrentStep"]
 
-        if failed_step in STEPS_TO_RETRY:
+        run_id = failed_item["Run_Id"]
+
+        if failed_step in STEPS_TO_RETRY and run_id <= 1:
             logger.info(f"Previous failed step was, {failed_step}. Relaunching cluster")
 
             payload = generate_lambda_launcher_payload(failed_item)
