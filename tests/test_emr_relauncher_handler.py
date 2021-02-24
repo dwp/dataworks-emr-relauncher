@@ -34,6 +34,7 @@ class TestRelauncher(unittest.TestCase):
                     "CurrentStep": "transform",
                     "S3_Prefix": "test_s3_prefix",
                     "Cluster_Id": "test_cluster_id",
+                    "Run_Id": 1,
                 }
             ],
         )
@@ -151,6 +152,7 @@ class TestRelauncher(unittest.TestCase):
             "CurrentStep": failed_step,
             "S3_Prefix": "test_s3_prefix",
             "Cluster_Id": "test_cluster_id",
+            "Run_Id": 1,
         }
 
         table.put_item(TableName=TABLE_NAME, Item=item)
