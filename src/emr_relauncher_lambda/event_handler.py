@@ -216,9 +216,6 @@ def get_dynamo_table(table_name):
 
 
 def get_escaped_json_string(json_string):
-    try:
-        escaped_string = json.dumps(json.dumps(json_string))
-    except:
-        escaped_string = json.dumps(json_string)
-
+    escaped_string = json.dumps(json_string)
+    logger.info(f"Escaped json: {json_string}")
     return escaped_string
