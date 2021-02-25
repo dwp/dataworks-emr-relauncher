@@ -32,7 +32,7 @@ Example message:
 |AWS_REGION| eu-west-1 |The region the lambda is running in|No|
 |LOG_LEVEL| INFO |The logging level of the Lambda|No|
 |SNS_TOPIC_ARN|arn:aws:sns:{region}:{account}:mytopic|The arn of the sns topic to send restart messages to|Yes|
-|TABLE_NAME|Retry|The arn of the DynamoDb table to query for Emr data|Yes|
+|TABLE_NAME|Retry|The name of the DynamoDb table to query for Emr data|Yes|
 
 
 ## Local Setup
