@@ -2,8 +2,8 @@
 
 ## About the project
 
-This application contains Python code that is responsible for relaunching an Emr cluster in the event of failure. The 
-code is intended to be deployed as an Aws Lambda and triggered by a Cloudwatch event which contains a cluster_id 
+This application contains Python code that is responsible for relaunching an EMR cluster in the event of failure. The 
+code is intended to be deployed as an AWS Lambda and triggered by a Cloudwatch event which contains a cluster_id 
 within the payload.
 
 
@@ -14,7 +14,7 @@ A DynamoDb table will be queried for additional data about the cluster:
 
 A cluster will be retried if the Run_Id is 1, and CurrentStep is contained in the list of steps to retry. 
 
-If the retry logic is satisfied a message will be constructed and sent to the provided Sns topic. 
+If the retry logic is satisfied a message will be constructed and sent to the provided SNS topic. 
 
 Example message:
 ```json
@@ -31,8 +31,8 @@ Example message:
 |AWS_PROFILE| default |The profile for making AWS calls to other services|No|
 |AWS_REGION| eu-west-1 |The region the lambda is running in|No|
 |LOG_LEVEL| INFO |The logging level of the Lambda|No|
-|SNS_TOPIC_ARN|The arn of the sns topic to send restart messages to|Yes|
-|TABLE_NAME|The arn of the DynamoDb table to query for Emr data|Yes|
+|SNS_TOPIC_ARN|arn:aws:sns:{region}:{account}:mytopic|The arn of the sns topic to send restart messages to|Yes|
+|TABLE_NAME|Retry|The arn of the DynamoDb table to query for Emr data|Yes|
 
 
 ## Local Setup
