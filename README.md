@@ -1,11 +1,28 @@
 # dataworks-emr-relauncher
 
-## An AWS lambda which receives CloudWatch events from Pdm Cluster failing with an error and handles it.
+## About the project
 
-This repo contains Makefile to fit the standard pattern. This repo is a base to create new non-Terraform repos, adding the githooks submodule, making the repo ready for use.
+This application contains Python code that is responsible for relaunching an Emr cluster in the event of failure. The 
+code is intended to be deployed as an Aws Lambda and triggered by a Cloudwatch event which contains a cluster_id 
+within the payload.
 
-After cloning this repo, please run:  
-`make bootstrap`
+
+A DynamoDb table will be queried for additional data about the cluster:
+* Run_Id: How many times this cluster has ran.
+* S3_Prefix: S3 path.
+* CurrentStep: Which step failed. 
+
+A cluster will be retried if the Run_Id is 1, and CurrentStep is contained in the list of steps to retry. 
+
+If the retry logic is satisfied a message will be constructed and sent to the provided Sns topic. 
+
+Example message:
+```json
+{
+    "correlation_id": "example_correlation_id",
+    "s3_prefix": "path/path"
+}
+```
 
 ## Environment variables
 
@@ -16,6 +33,14 @@ After cloning this repo, please run:
 |LOG_LEVEL| INFO |The logging level of the Lambda|No|
 |SNS_TOPIC_ARN|The arn of the sns topic to send restart messages to|Yes|
 |TABLE_NAME|The arn of the DynamoDb table to query for Emr data|Yes|
+
+
+## Local Setup
+
+A Makefile is provided for project setup.
+
+Run `make setup-local` This will create a Python virtual environment and install and dependencies. 
+
 
 ## Testing
 
