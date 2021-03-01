@@ -44,11 +44,6 @@ def handle_event(event):
     if not args.table_name:
         raise Exception("Required environment variable TABLE_NAME is unset")
 
-    steps_not_to_retry = []
-    if args.steps_not_to_retry:
-        logger.info(f"Steps not to retry from set as '{args.steps_not_to_retry}'")
-        steps_not_to_retry = args.steps_not_to_retry.split(",")
-
     sns_client = get_sns_client()
 
     dynamo_client = get_dynamo_table(args.table_name)
@@ -67,7 +62,7 @@ def handle_event(event):
 
         run_id = failed_item["Run_Id"]
 
-        if failed_step not in steps_not_to_retry and run_id <= 1:
+        if failed_step not in args.steps_not_to_retry and int(run_id) <= int(args.max_retry_count):
             logger.info(f"Previous failed step was, {failed_step}. Relaunching cluster")
 
             payload = generate_lambda_launcher_payload(failed_item)
@@ -191,7 +186,11 @@ def get_environment_variables():
         _args.table_name = os.environ["TABLE_NAME"]
 
     if "STEPS_TO_NOT_RETRY" in os.environ:
-        _args.steps_not_to_retry = os.environ["STEPS_TO_NOT_RETRY"]
+        _args.steps_not_to_retry = os.environ["STEPS_TO_NOT_RETRY"].split(",")
+    else:
+        _args.steps_not_to_retry = []
+
+    _args.max_retry_count = os.environ.get('MAX_RETRY_COUNT', 1)
 
     if "LOG_LEVEL" in os.environ:
         _args.log_level = os.environ["LOG_LEVEL"]
