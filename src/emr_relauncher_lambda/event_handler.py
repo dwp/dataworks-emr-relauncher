@@ -65,7 +65,9 @@ def handle_event(event):
         failed_item = dynamo_items[0]  # can only be one item
         failed_step = failed_item["CurrentStep"]
 
-        if failed_step not in steps_not_to_retry:
+        run_id = failed_item["Run_Id"]
+
+        if failed_step not in steps_not_to_retry and run_id <= 1:
             logger.info(f"Previous failed step was, {failed_step}. Relaunching cluster")
 
             payload = generate_lambda_launcher_payload(failed_item)
@@ -219,4 +221,5 @@ def get_escaped_json_string(json_string):
     except:
         escaped_string = json.dumps(json_string)
 
+    logger.info(f"Escaped json: {json_string}")
     return escaped_string
