@@ -17,6 +17,8 @@ args = argparse.Namespace()
 args.sns_topic = SNS_TOPIC_ARN
 args.table_name = TABLE_NAME
 args.log_level = "INFO"
+args.max_retry_count = 1
+args.steps_not_to_retry = ""
 
 
 class TestRelauncher(unittest.TestCase):
@@ -95,6 +97,7 @@ class TestRelauncher(unittest.TestCase):
         setup_logging_mock,
         send_sns_message_mock,
     ):
+        args.steps_not_to_retry = "collect_metrics"
         dynamodb_resource = self.mock_get_dynamodb_table("collect_metrics")
         get_dynamo_table_mock.return_value = dynamodb_resource
 
@@ -107,6 +110,38 @@ class TestRelauncher(unittest.TestCase):
         event_handler.handler(event, None)
 
         send_sns_message_mock.assert_not_called()
+        args.steps_not_to_retry = ""
+
+    @mock.patch("emr_relauncher_lambda.event_handler.send_sns_message")
+    @mock.patch("emr_relauncher_lambda.event_handler.setup_logging")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_environment_variables")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
+    @mock.patch("emr_relauncher_lambda.event_handler.logger")
+    @mock_dynamodb2
+    def test_handler_max_retries_breached_not_retried(
+        self,
+        mock_logger,
+        get_sns_client_mock,
+        get_dynamo_table_mock,
+        get_environment_variables_mock,
+        setup_logging_mock,
+        send_sns_message_mock,
+    ):
+        args.max_retry_count = 0
+        dynamodb_resource = self.mock_get_dynamodb_table("transform")
+        get_dynamo_table_mock.return_value = dynamodb_resource
+
+        sns_client_mock = mock.MagicMock()
+        get_sns_client_mock.return_value = sns_client_mock
+        get_environment_variables_mock.return_value = args
+
+        event = self.get_example_event("test_cluster_id")
+
+        event_handler.handler(event, None)
+
+        send_sns_message_mock.assert_not_called()
+        args.max_retry_count = 1
 
     @mock.patch("emr_relauncher_lambda.event_handler.setup_logging")
     @mock.patch("emr_relauncher_lambda.event_handler.get_environment_variables")

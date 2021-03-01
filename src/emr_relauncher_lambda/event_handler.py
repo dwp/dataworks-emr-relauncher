@@ -14,21 +14,6 @@ from boto3.dynamodb.conditions import Attr
 args = None
 logger = None
 
-STEPS_TO_RETRY = [
-    "transform",
-    "create-views-tables",
-    "views",
-    "model",
-    "transform",
-    "source",
-    "initial_transactional_load",
-    "transactional",
-    "create_databases",
-    "clean-dictionary-data",
-    "metrics-setup",
-    "create-hive-dynamo-table",
-]
-
 
 def handler(event, context):
     """Handle the event from AWS.
@@ -77,7 +62,9 @@ def handle_event(event):
 
         run_id = failed_item["Run_Id"]
 
-        if failed_step in STEPS_TO_RETRY and run_id <= 1:
+        if failed_step not in args.steps_not_to_retry and int(run_id) <= int(
+            args.max_retry_count
+        ):
             logger.info(f"Previous failed step was, {failed_step}. Relaunching cluster")
 
             payload = generate_lambda_launcher_payload(failed_item)
@@ -126,6 +113,13 @@ def generate_lambda_launcher_payload(dynamo_item):
         "correlation_id": dynamo_item["Correlation_Id"],
         "s3_prefix": dynamo_item["S3_Prefix"],
     }
+
+    data_product = dynamo_item["DataProduct"]
+    if data_product == "ADG-full":
+        payload["snapshot_type"] = "full"
+    elif data_product == "ADG-incremental":
+        payload["snapshot_type"] = "incremental"
+
     logger.info(f"Lambda payload: {payload}")
     return payload
 
@@ -192,6 +186,13 @@ def get_environment_variables():
 
     if "TABLE_NAME" in os.environ:
         _args.table_name = os.environ["TABLE_NAME"]
+
+    if "STEPS_TO_NOT_RETRY" in os.environ:
+        _args.steps_not_to_retry = os.environ["STEPS_TO_NOT_RETRY"].split(",")
+    else:
+        _args.steps_not_to_retry = []
+
+    _args.max_retry_count = os.environ.get("MAX_RETRY_COUNT", 1)
 
     if "LOG_LEVEL" in os.environ:
         _args.log_level = os.environ["LOG_LEVEL"]
