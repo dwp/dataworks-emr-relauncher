@@ -14,21 +14,6 @@ from boto3.dynamodb.conditions import Attr
 args = None
 logger = None
 
-STEPS_TO_RETRY = [
-    "transform",
-    "create-views-tables",
-    "views",
-    "model",
-    "transform",
-    "source",
-    "initial_transactional_load",
-    "transactional",
-    "create_databases",
-    "clean-dictionary-data",
-    "metrics-setup",
-    "create-hive-dynamo-table",
-]
-
 
 def handler(event, context):
     """Handle the event from AWS.
@@ -59,6 +44,11 @@ def handle_event(event):
     if not args.table_name:
         raise Exception("Required environment variable TABLE_NAME is unset")
 
+    steps_not_to_retry = []
+    if args.steps_not_to_retry:
+        logger.info(f"Steps not to retry from set as '{args.steps_not_to_retry}'")
+        steps_not_to_retry = args.steps_not_to_retry.split(",")
+
     sns_client = get_sns_client()
 
     dynamo_client = get_dynamo_table(args.table_name)
@@ -75,7 +65,7 @@ def handle_event(event):
         failed_item = dynamo_items[0]  # can only be one item
         failed_step = failed_item["CurrentStep"]
 
-        if failed_step in STEPS_TO_RETRY:
+        if failed_step not in steps_not_to_retry:
             logger.info(f"Previous failed step was, {failed_step}. Relaunching cluster")
 
             payload = generate_lambda_launcher_payload(failed_item)
@@ -124,6 +114,13 @@ def generate_lambda_launcher_payload(dynamo_item):
         "correlation_id": dynamo_item["Correlation_Id"],
         "s3_prefix": dynamo_item["S3_Prefix"],
     }
+
+    data_product = dynamo_item["DataProduct"]
+    if data_product == "ADG-full":
+        payload["snapshot_type"] = "full"
+    elif data_product == "ADG-incremental":
+        payload["snapshot_type"] = "incremental"
+
     logger.info(f"Lambda payload: {payload}")
     return payload
 
@@ -190,6 +187,9 @@ def get_environment_variables():
 
     if "TABLE_NAME" in os.environ:
         _args.table_name = os.environ["TABLE_NAME"]
+
+    if "STEPS_TO_NOT_RETRY" in os.environ:
+        _args.steps_not_to_retry = os.environ["STEPS_TO_NOT_RETRY"]
 
     if "LOG_LEVEL" in os.environ:
         _args.log_level = os.environ["LOG_LEVEL"]

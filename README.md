@@ -1,6 +1,6 @@
 # dataworks-emr-relauncher
 
-## An AWS lambda which receives CloudWatch events from Pdm Cluster failing with an error and handles it.
+## An AWS lambda which receives CloudWatch events from ADG or PDM Cluster failing with an error and handles it.
 
 This repo contains Makefile to fit the standard pattern. This repo is a base to create new non-Terraform repos, adding the githooks submodule, making the repo ready for use.
 
