@@ -62,7 +62,9 @@ def handle_event(event):
 
         run_id = failed_item["Run_Id"]
 
-        if failed_step not in args.steps_not_to_retry and int(run_id) <= int(args.max_retry_count):
+        if failed_step not in args.steps_not_to_retry and int(run_id) <= int(
+            args.max_retry_count
+        ):
             logger.info(f"Previous failed step was, {failed_step}. Relaunching cluster")
 
             payload = generate_lambda_launcher_payload(failed_item)
@@ -190,7 +192,7 @@ def get_environment_variables():
     else:
         _args.steps_not_to_retry = []
 
-    _args.max_retry_count = os.environ.get('MAX_RETRY_COUNT', 1)
+    _args.max_retry_count = os.environ.get("MAX_RETRY_COUNT", 1)
 
     if "LOG_LEVEL" in os.environ:
         _args.log_level = os.environ["LOG_LEVEL"]
