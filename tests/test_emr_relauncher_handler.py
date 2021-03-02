@@ -34,7 +34,9 @@ class TestRelauncher(unittest.TestCase):
                     "Correlation_Id": "test_correlation_id",
                     "DataProduct": "PDM",
                     "CurrentStep": "transform",
-                    "S3_Prefix": "test_s3_prefix",
+                    "S3_Prefix_Snapshots": "test_s3_prefix_snapshots",
+                    "S3_Prefix_Analytical_DataSet": "test_s3_prefix_adg",
+                    "Snapshot_Type": "full",
                     "Cluster_Id": "test_cluster_id",
                     "Run_Id": 1,
                 }
@@ -77,7 +79,40 @@ class TestRelauncher(unittest.TestCase):
 
         send_sns_message_mock.assert_called_once_with(
             sns_client_mock,
-            {"correlation_id": "test_correlation_id", "s3_prefix": "test_s3_prefix"},
+            {"correlation_id": "test_correlation_id", "s3_prefix": "test_s3_prefix_adg", "snapshot_type": "full"},
+            args.sns_topic,
+        )
+
+    @mock.patch("emr_relauncher_lambda.event_handler.send_sns_message")
+    @mock.patch("emr_relauncher_lambda.event_handler.setup_logging")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_environment_variables")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
+    @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
+    @mock.patch("emr_relauncher_lambda.event_handler.logger")
+    @mock_dynamodb2
+    def test_handler_sns_message_sent_adg(
+        self,
+        mock_logger,
+        get_sns_client_mock,
+        get_dynamo_table_mock,
+        get_environment_variables_mock,
+        setup_logging_mock,
+        send_sns_message_mock,
+    ):
+        dynamodb_resource = self.mock_get_dynamodb_table("transform", "ADG-incremental", "incremental")
+        get_dynamo_table_mock.return_value = dynamodb_resource
+
+        sns_client_mock = mock.MagicMock()
+        get_sns_client_mock.return_value = sns_client_mock
+        get_environment_variables_mock.return_value = args
+
+        event = self.get_example_event("test_cluster_id")
+
+        event_handler.handler(event, None)
+
+        send_sns_message_mock.assert_called_once_with(
+            sns_client_mock,
+            {"correlation_id": "test_correlation_id", "s3_prefix": "test_s3_prefix_snapshots", "snapshot_type": "incremental"},
             args.sns_topic,
         )
 
@@ -164,7 +199,7 @@ class TestRelauncher(unittest.TestCase):
             event_handler.handle_event(event)
 
     @mock_dynamodb2
-    def mock_get_dynamodb_table(self, failed_step):
+    def mock_get_dynamodb_table(self, failed_step, data_product="PDM", snapshot_type="full"):
         dynamodb_client = boto3.client("dynamodb", region_name="eu-west-2")
         dynamodb_client.create_table(
             TableName=TABLE_NAME,
@@ -183,9 +218,11 @@ class TestRelauncher(unittest.TestCase):
 
         item = {
             "Correlation_Id": "test_correlation_id",
-            "DataProduct": "PDM",
+            "DataProduct": data_product,
             "CurrentStep": failed_step,
-            "S3_Prefix": "test_s3_prefix",
+            "S3_Prefix_Snapshots": "test_s3_prefix_snapshots",
+            "S3_Prefix_Analytical_DataSet": "test_s3_prefix_adg",
+            "Snapshot_Type": snapshot_type,
             "Cluster_Id": "test_cluster_id",
             "Run_Id": 1,
         }

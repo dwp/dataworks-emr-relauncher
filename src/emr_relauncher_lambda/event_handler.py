@@ -109,16 +109,17 @@ def query_dynamo(dynamo_table, cluster_id):
 
 
 def generate_lambda_launcher_payload(dynamo_item):
+    s3_prefix_value = (
+        dynamo_item["S3_Prefix_Analytical_DataSet"]
+        if dynamo_item["DataProduct"] == "PDM"
+        else dynamo_item["S3_Prefix_Snapshots"]
+    )
+
     payload = {
         "correlation_id": dynamo_item["Correlation_Id"],
-        "s3_prefix": dynamo_item["S3_Prefix"],
+        "s3_prefix": s3_prefix_value,
+        "snapshot_type": dynamo_item["Snapshot_Type"],
     }
-
-    data_product = dynamo_item["DataProduct"]
-    if data_product == "ADG-full":
-        payload["snapshot_type"] = "full"
-    elif data_product == "ADG-incremental":
-        payload["snapshot_type"] = "incremental"
 
     logger.info(f"Lambda payload: {payload}")
     return payload
