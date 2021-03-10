@@ -38,7 +38,8 @@ class TestRelauncher(unittest.TestCase):
                     "S3_Prefix_Analytical_DataSet": "test_s3_prefix_adg",
                     "Snapshot_Type": "full",
                     "Cluster_Id": "test_cluster_id",
-                    "Run_Id": 1,
+                    "Run_Id": 1,,
+                    "Date": "2020-01-02",
                 }
             ],
         )
@@ -83,6 +84,7 @@ class TestRelauncher(unittest.TestCase):
                 "correlation_id": "test_correlation_id",
                 "s3_prefix": "test_s3_prefix_adg",
                 "snapshot_type": "full",
+                "export_date": "2020-01-02",
             },
             args.sns_topic,
         )
@@ -122,6 +124,7 @@ class TestRelauncher(unittest.TestCase):
                 "correlation_id": "test_correlation_id",
                 "s3_prefix": "test_s3_prefix_snapshots",
                 "snapshot_type": "incremental",
+                "export_date": "2020-01-02",
             },
             args.sns_topic,
         )
@@ -237,6 +240,7 @@ class TestRelauncher(unittest.TestCase):
             "Snapshot_Type": snapshot_type,
             "Cluster_Id": "test_cluster_id",
             "Run_Id": 1,
+            "Date": "2020-01-02",
         }
 
         table.put_item(TableName=TABLE_NAME, Item=item)
