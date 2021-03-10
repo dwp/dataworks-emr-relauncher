@@ -38,7 +38,7 @@ class TestRelauncher(unittest.TestCase):
                     "S3_Prefix_Analytical_DataSet": "test_s3_prefix_adg",
                     "Snapshot_Type": "full",
                     "Cluster_Id": "test_cluster_id",
-                    "Run_Id": 1,,
+                    "Run_Id": 1,
                     "Date": "2020-01-02",
                 }
             ],
