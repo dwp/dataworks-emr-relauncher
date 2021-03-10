@@ -119,6 +119,7 @@ def generate_lambda_launcher_payload(dynamo_item):
         "correlation_id": dynamo_item["Correlation_Id"],
         "s3_prefix": s3_prefix_value,
         "snapshot_type": dynamo_item["Snapshot_Type"],
+        "export_date": dynamo_item["Date"],
     }
 
     logger.info(f"Lambda payload: {payload}")
