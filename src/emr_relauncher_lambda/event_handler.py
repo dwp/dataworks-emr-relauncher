@@ -109,9 +109,11 @@ def query_dynamo(dynamo_table, cluster_id):
 
 
 def generate_lambda_launcher_payload(dynamo_item):
+    data_products_using_s3_prefix_analytical = ["PDM", "CLIVE"]
+
     s3_prefix_value = (
         dynamo_item["S3_Prefix_Analytical_DataSet"]
-        if dynamo_item["DataProduct"] == "PDM"
+        if dynamo_item["DataProduct"] in data_products_using_s3_prefix_analytical
         else dynamo_item["S3_Prefix_Snapshots"]
     )
 
