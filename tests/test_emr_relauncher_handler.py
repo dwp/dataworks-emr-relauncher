@@ -6,7 +6,7 @@ import unittest
 from unittest import mock
 
 import boto3
-from moto import mock_dynamodb2
+from moto import mock_dynamodb
 
 from emr_relauncher_lambda import event_handler
 
@@ -22,7 +22,7 @@ args.steps_not_to_retry = ""
 
 
 class TestRelauncher(unittest.TestCase):
-    @mock_dynamodb2
+    @mock_dynamodb
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_exists(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_table("transform")
@@ -44,7 +44,7 @@ class TestRelauncher(unittest.TestCase):
             ],
         )
 
-    @mock_dynamodb2
+    @mock_dynamodb
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
     def test_query_dynamo_item_empty_result(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_table("transform")
@@ -57,7 +57,7 @@ class TestRelauncher(unittest.TestCase):
     @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
     @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
-    @mock_dynamodb2
+    @mock_dynamodb
     def test_handler_sns_message_sent(
         self,
         mock_logger,
@@ -95,7 +95,7 @@ class TestRelauncher(unittest.TestCase):
     @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
     @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
-    @mock_dynamodb2
+    @mock_dynamodb
     def test_handler_sns_message_sent_adg(
         self,
         mock_logger,
@@ -135,7 +135,7 @@ class TestRelauncher(unittest.TestCase):
     @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
     @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
-    @mock_dynamodb2
+    @mock_dynamodb
     def test_handler_failing_event_not_retried(
         self,
         mock_logger,
@@ -166,7 +166,7 @@ class TestRelauncher(unittest.TestCase):
     @mock.patch("emr_relauncher_lambda.event_handler.get_dynamo_table")
     @mock.patch("emr_relauncher_lambda.event_handler.get_sns_client")
     @mock.patch("emr_relauncher_lambda.event_handler.logger")
-    @mock_dynamodb2
+    @mock_dynamodb
     def test_handler_max_retries_breached_not_retried(
         self,
         mock_logger,
@@ -211,7 +211,7 @@ class TestRelauncher(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             event_handler.handle_event(event)
 
-    @mock_dynamodb2
+    @mock_dynamodb
     def mock_get_dynamodb_table(
         self, failed_step, data_product="PDM", snapshot_type="full"
     ):
